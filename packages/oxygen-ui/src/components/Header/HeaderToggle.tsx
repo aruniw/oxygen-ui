@@ -21,7 +21,7 @@ import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import { styled } from '@mui/material/styles';
 import type { SxProps, Theme } from '@mui/material/styles';
-import { Menu, PanelLeftClose } from '@wso2/oxygen-ui-icons-react';
+import { Menu, ChevronLeft } from '@wso2/oxygen-ui-icons-react';
 import { AppShellContext } from '../AppShell/context';
 
 /**
@@ -95,7 +95,7 @@ export const HeaderToggle: React.FC<HeaderToggleProps> = ({
           {collapsed ? (
             expandIcon || <Menu size={20} />
           ) : (
-            collapseIcon || <PanelLeftClose size={20} />
+            collapseIcon || <ChevronLeft size={20} />
           )}
         </span>
       </HeaderToggleRoot>

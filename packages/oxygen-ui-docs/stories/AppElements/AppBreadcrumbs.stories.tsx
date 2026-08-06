@@ -119,6 +119,23 @@ export const CustomMaxItems: Story = {
 };
 
 /**
+ * Demonstrates a breadcrumb with a middle item that has no `onClick` handler.
+ * Non-clickable items are rendered in primary text color without hover effects.
+ */
+export const MiddleItemNoLink: Story = {
+  render: () => (
+    <AppBreadcrumbs
+      items={[
+        {key: 'home', label: 'Home', onClick: () => {}},
+        {key: 'organization', label: 'Organization'},
+        {key: 'project', label: 'Project', onClick: () => {}},
+        {key: 'settings', label: 'Settings'},
+      ]}
+    />
+  ),
+};
+
+/**
  * Use the `sx` prop for custom container styling.
  */
 export const WithSxProp: Story = {
