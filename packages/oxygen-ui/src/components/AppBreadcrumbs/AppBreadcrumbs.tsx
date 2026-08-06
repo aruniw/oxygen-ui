@@ -59,22 +59,41 @@ const AppBreadcrumbsRoot = styled('div', {
 const AppBreadcrumbsItem = styled(Typography, {
   name: 'MuiAppBreadcrumbs',
   slot: 'Item',
-})<{ownerState: {isLast: boolean}}>(({theme, ownerState}) =>
-  ownerState.isLast
-    ? {
-        whiteSpace: 'nowrap',
+})<{ownerState: {isLast: boolean; isClickable: boolean}}>(({theme, ownerState}) => {
+  if (ownerState.isLast) {
+    return {
+      whiteSpace: 'nowrap',
+      textDecoration: 'none',
+      color: theme.vars?.palette.text.primary ?? theme.palette.text.primary,
+      '&:hover': {
+        textDecoration: 'none',
         color: theme.vars?.palette.text.primary ?? theme.palette.text.primary,
-      }
-    : {
-        cursor: 'pointer',
-        whiteSpace: 'nowrap',
-        color: theme.vars?.palette.text.secondary ?? theme.palette.text.secondary,
-        '&:hover': {
-          textDecoration: 'underline',
-          color: theme.vars?.palette.text.primary ?? theme.palette.text.primary,
-        },
       },
-);
+    };
+  }
+  if (!ownerState.isClickable) {
+    return {
+      whiteSpace: 'nowrap',
+      textDecoration: 'none',
+      color: theme.vars?.palette.text.disabled ?? theme.palette.text.disabled,
+      fontStyle: 'italic',
+      opacity: 0.7,
+      '&:hover': {
+        textDecoration: 'none',
+        color: theme.vars?.palette.text.disabled ?? theme.palette.text.disabled,
+      },
+    };
+  }
+  return {
+    cursor: 'pointer',
+    whiteSpace: 'nowrap',
+    color: theme.vars?.palette.text.secondary ?? theme.palette.text.secondary,
+    '&:hover': {
+      textDecoration: 'underline',
+      color: theme.vars?.palette.text.primary ?? theme.palette.text.primary,
+    },
+  };
+});
 
 // A native <button> so the overflow control is keyboard focusable and
 // announced as interactive (WCAG 2.1.1 / 4.1.2).
@@ -112,36 +131,43 @@ export default function AppBreadcrumbs({items, maxItems = 4, sx, ...props}: AppB
   };
 
   const shouldTruncate = items.length > maxItems;
-  const visibleItems: BreadcrumbItem[] = shouldTruncate ? [items[0], ...items.slice(items.length - 2)] : items;
-  const hiddenItems: BreadcrumbItem[] = shouldTruncate ? items.slice(1, items.length - 2) : [];
+  const visibleItems: BreadcrumbItem[] = shouldTruncate
+    ? [...items.slice(0, maxItems - 1), items[items.length - 1]]
+    : items;
+  const hiddenItems: BreadcrumbItem[] = shouldTruncate ? items.slice(maxItems - 1, items.length - 1) : [];
 
-  const renderItem = (item: BreadcrumbItem, isLast: boolean) => (
-    <AppBreadcrumbsItem
-      key={item.key}
-      variant="h5"
-      ownerState={{isLast}}
-      role={isLast ? undefined : 'button'}
-      tabIndex={isLast ? undefined : 0}
-      onClick={isLast ? undefined : item.onClick}
-      onKeyDown={
-        isLast
-          ? undefined
-          : (e: React.KeyboardEvent) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                item.onClick?.();
-              }
+  const renderItem = (item: BreadcrumbItem, isLast: boolean) => {
+    const isClickable = !isLast && !!item.onClick;
+    return (
+      <AppBreadcrumbsItem
+        key={item.key}
+        variant="h5"
+        ownerState={{isLast, isClickable}}
+        {...(isClickable && {
+          role: 'button',
+          tabIndex: 0,
+          onClick: item.onClick,
+          onKeyDown: (e: React.KeyboardEvent) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              item.onClick?.();
             }
-      }
-    >
-      {item.label}
-    </AppBreadcrumbsItem>
-  );
+          },
+        })}
+      >
+        {item.label}
+      </AppBreadcrumbsItem>
+    );
+  };
 
   const breadcrumbChildren: JSX.Element[] = [];
 
   if (shouldTruncate) {
-    breadcrumbChildren.push(renderItem(visibleItems[0], false));
+    // Show items before the ellipsis (all except the last)
+    visibleItems.slice(0, -1).forEach((item, index) => {
+      breadcrumbChildren.push(renderItem(item, false));
+    });
+    // Add ellipsis button
     breadcrumbChildren.push(
       <AppBreadcrumbsEllipsis
         key="__ellipsis__"
@@ -158,8 +184,8 @@ export default function AppBreadcrumbs({items, maxItems = 4, sx, ...props}: AppB
         ...
       </AppBreadcrumbsEllipsis>,
     );
-    breadcrumbChildren.push(renderItem(visibleItems[1], false));
-    breadcrumbChildren.push(renderItem(visibleItems[2], true));
+    // Show last item
+    breadcrumbChildren.push(renderItem(visibleItems[visibleItems.length - 1], true));
   } else {
     items.forEach((item, index) => {
       breadcrumbChildren.push(renderItem(item, index === items.length - 1));
